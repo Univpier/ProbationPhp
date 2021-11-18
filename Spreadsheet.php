@@ -4,14 +4,6 @@ require 'vendor/autoload.php';
 require_once 'test.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use test as ex;
-
-/**
- * @throws \PhpOffice\PhpSpreadsheet\Exception
- */
-
-
-echo ex\Database::$arrTree;
 
 class Exel{
     function spreadsheet($arrTree){
@@ -39,7 +31,7 @@ class Exel{
 }
 
 
-
-
-$outputExel = new Exel();
-//$outputExel->spreadsheet();
+$database = new Database('localhost',  'probation', 'root','');
+$data = $database->setupPlainTree();
+$excel = new Exel;
+$excel->spreadsheet($data);

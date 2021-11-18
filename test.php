@@ -2,11 +2,12 @@
 //require_once vendor\phpoffice\phpspreadsheet\Spreadsheet;
 //phpinfo();
 //"phpoffice/phpspreadsheet": "^1.8"
-namespace \test;
+
 class Database
 {
 
     public $plainTree;
+    public $arrTree;
 
     function __construct($host, $dbname, $username, $passwd)
     {
@@ -16,7 +17,7 @@ class Database
         $this->passwd = $passwd;
         $this->pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname",$this->username,$this->passwd);
     }
-    function setupPlainTree()
+     function setupPlainTree()
     {
         $this->sql = "select * from test;";
         $this->query = $this->pdo->prepare($this->sql);
@@ -74,16 +75,14 @@ class Database
         return $array;
 
     }
+    static public function exel(){
 
-
+    }
 }
 
-$database1 = new Database('localhost',  'probation', 'root','');
-$database1->setupPlainTree();
-$arrTree = $database1->setupPlainTree();
-
-
-//$database1->updatePlainTreeOneNode('NewprogramLanguage',0,1);
-//$database1->setupPlainTreeOneNode(1);
-echo json_encode($database1->createTree(0));
+//$database1 = new Database('localhost',  'probation', 'root','');
+//$database1->setupPlainTree();
+////$database1->updatePlainTreeOneNode('NewprogramLanguage',0,1);
+////$database1->setupPlainTreeOneNode(1);
+//echo json_encode($database1->createTree(0));
 //$database1->setupPlainTreeOneNode(1);
