@@ -1,7 +1,4 @@
 <?php
-//require_once vendor\phpoffice\phpspreadsheet\Spreadsheet;
-//phpinfo();
-//"phpoffice/phpspreadsheet": "^1.8"
 
 class Database
 {
@@ -17,7 +14,7 @@ class Database
         $this->passwd = $passwd;
         $this->pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname",$this->username,$this->passwd);
     }
-     function setupPlainTree()
+     function setupPlainTree() // получает массив таблицы из базы данных
     {
         $this->sql = "select * from test;";
         $this->query = $this->pdo->prepare($this->sql);
@@ -26,15 +23,8 @@ class Database
 //        $this->plainTree = $this->arr;
         return $this->arr;
     }
-    function setupPlainTreeOneNode($id){
-        $this->sql ="select * from test where id= ?";
-        $this->query = $this->pdo->prepare($this->sql);
-        $this->query->execute([$id]);
-        $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
-        $this->plainTree = $this->arr;
-        echo json_encode($this->arr);
-    }
-    function updatePlainTreeOneNode($anotherName,$parentId,$id){
+    function updatePlainTreeOneNode($anotherName,$parentId,$id)// обновление узла
+    {
         try{
             $this->pdo->beginTransaction();
             $this->sql ="UPDATE test SET name = ?, parentId = ? where id= ?";
@@ -47,8 +37,7 @@ class Database
         }
 
     }
-
-    function getNodes(int $parentId): array
+    function getNodes(int $parentId): array // return отфилтрованного по parentId массива
     {
         $array = [];
         foreach ($this->setupPlainTree() as $value) {
@@ -58,12 +47,28 @@ class Database
         }
         return $array;
     }
+    function getOneNode(int $parentId): array//return отфилтрованного по id массива
+    {
+        foreach ($this->setupPlainTree() as $value) {
+            if ($parentId === (int)$value['id']) {
+                $array[] = $value;
+            }
+        }
+        return $array;
+    }
 
-    function createTree($parentId = 0)
+
+    function createTree($parentId = 0,$getOneNode = false )// возвращает вложенное дерево(При значении $getOneNode = true выводит вложенность узла по id узла)
     {
         $array = [];
-        $nodes = $this->getNodes($parentId);
-        foreach ($nodes as $value) {
+        if($getOneNode == false){
+            $nodes = $this->getNodes($parentId);
+        }else{
+            $nodes = $this->getOneNode($parentId);
+        }
+
+        foreach ($nodes as $value)
+        {
             $array[] = [
                 'id' => $value['id'],
                 'name' => $value['name'],
@@ -75,14 +80,38 @@ class Database
         return $array;
 
     }
-    static public function exel(){
+     function deletePlainTreeOneNodeWithChildren($parentId =0 ,$getOneNode = false ) // удаление узла с вложенностью ( При значении $getOneNode = true удаляет вложенность узла по id узла)
+     {
+//        $array_for_delete = $this->createTree(6,true);
+         if($getOneNode == false){
+             $array_for_delete = $this->getNodes($parentId);
+         }else{
+             $array_for_delete = $this->getOneNode($parentId);
+         }
+         foreach ($array_for_delete as $value){
+             $this->sql = "delete from test where id = ? ;";
+             $value_id = $value['id'];
+             $this->query = $this->pdo->prepare($this->sql);
+             $this->query->execute([$value_id]);
+             $this->deletePlainTreeOneNodeWithChildren($value['id']);
+         }
 
     }
 }
 
-//$database1 = new Database('localhost',  'probation', 'root','');
-//$database1->setupPlainTree();
-////$database1->updatePlainTreeOneNode('NewprogramLanguage',0,1);
-////$database1->setupPlainTreeOneNode(1);
+$database1 = new Database('localhost',  'probation', 'root','');
+
+
+
+ //вывод дерева
 //echo json_encode($database1->createTree(0));
-//$database1->setupPlainTreeOneNode(1);
+
+// вывод дерева одного узла
+//echo json_encode($database1->createTree(6,true));
+
+//обновление узла
+//$database1->updatePlainTreeOneNode('NewprogramLanguage',0,1);
+
+//удаление узла с вложенностью
+//$database1->deletePlainTreeOneNodeWithChildren(6,true);
+
