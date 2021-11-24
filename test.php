@@ -16,13 +16,14 @@ class Database
     }
      function setupPlainTree() // получает массив таблицы из базы данных
     {
-        $this->sql = "select * from test;";
+        $this->sql = "select * from test as t join responsible_test as rt on t.id = rt.test_id join responsible as r on r.responsibleId = rt.responsible_id ;";
         $this->query = $this->pdo->prepare($this->sql);
         $this->query->execute();
         $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
 //        $this->plainTree = $this->arr;
         return $this->arr;
     }
+
     function updatePlainTreeOneNode($anotherName,$parentId,$id)// обновление узла
     {
         try{
@@ -35,6 +36,36 @@ class Database
             $this->pdo->rollBack();
 //            throw new Exception($e);
         }
+
+    }
+//    function getResponsibleForUpdate(...$arr){
+//        foreach($arr as $value){
+//
+//        }
+//        updatePlainTreeOneNode1();
+//    }
+
+    function updatePlainTreeOneNode1(...$arr)// обновление узла
+    {
+        $lenArr =count($arr);
+        for($i = 0; $i < $lenArr; $i+=3){
+            $responsibleIdOld = $arr[i];
+            $responsibleId = $arr[i+1];
+            $responsible_name = $arr[i+2];
+            try{
+                $this->pdo->beginTransaction();
+                $this->sql ="UPDATE responsible_test SET responsibleId = ?, responsible_name = ? where responsibleIdOld= ?";
+                $this->query = $this->pdo->prepare($this->sql);
+                $this->query->execute([$responsibleIdOld,$responsibleId,$responsible_name]);
+                $this->pdo->commit();
+            }catch (\Exception $e) {
+                $this->pdo->rollBack();
+//            throw new Exception($e);
+            }
+        }
+
+
+
 
     }
     function getNodes(int $parentId): array // return отфилтрованного по parentId массива
@@ -70,10 +101,12 @@ class Database
         foreach ($nodes as $value)
         {
             $array[] = [
+                'responsible' => $value['responsible_name'],
                 'id' => $value['id'],
                 'name' => $value['name'],
                 'parentId' => $value['parentId'],
                 'children' => $this->createTree($value['id'])
+
             ];
         }
 
@@ -97,6 +130,7 @@ class Database
          }
 
     }
+
 }
 
 $database1 = new Database('localhost',  'probation', 'root','');
@@ -115,3 +149,4 @@ $database1 = new Database('localhost',  'probation', 'root','');
 //удаление узла с вложенностью
 //$database1->deletePlainTreeOneNodeWithChildren(6,true);
 
+$database1->updatePlainTreeOneNode1();
