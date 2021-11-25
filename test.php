@@ -2,7 +2,6 @@
 
 class Database
 {
-
     public $plainTree;
     public $arrTree;
 
@@ -23,7 +22,15 @@ class Database
 //        $this->plainTree = $this->arr;
         return $this->arr;
     }
-
+    function insertNewResponsibleInTable($responsible_name) // получает массив таблицы из базы данных
+    {
+        $this->sql = "INSERT INTO responsible ($responsible_name) VALUES ($responsible_name = ?);";
+        $this->query = $this->pdo->prepare($this->sql);
+        $this->query->execute([$responsible_name]);
+//        $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
+//        $this->plainTree = $this->arr;
+//        return $this->arr;
+    }
     function updatePlainTreeOneNode($anotherName,$parentId,$id)// обновление узла
     {
         try{
@@ -48,15 +55,15 @@ class Database
     function updatePlainTreeOneNode1(...$arr)// обновление узла
     {
         $lenArr =count($arr);
-        for($i = 0; $i < $lenArr; $i+=3){
-            $responsibleIdOld = $arr[i];
-            $responsibleId = $arr[i+1];
-            $responsible_name = $arr[i+2];
+        echo $lenArr;
+        for($i = 0; $i < $lenArr; $i+=2){
+            $responsible_name = $arr[$i];
+            $responsibleId = $arr[$i+1];
             try{
                 $this->pdo->beginTransaction();
-                $this->sql ="UPDATE responsible_test SET responsibleId = ?, responsible_name = ? where responsibleIdOld= ?";
+                $this->sql ="UPDATE responsible SET responsible_name = ? where responsibleId= ?";
                 $this->query = $this->pdo->prepare($this->sql);
-                $this->query->execute([$responsibleIdOld,$responsibleId,$responsible_name]);
+                $this->query->execute([$responsible_name,$responsibleId]);
                 $this->pdo->commit();
             }catch (\Exception $e) {
                 $this->pdo->rollBack();
@@ -106,7 +113,6 @@ class Database
                 'name' => $value['name'],
                 'parentId' => $value['parentId'],
                 'children' => $this->createTree($value['id'])
-
             ];
         }
 
@@ -125,7 +131,6 @@ class Database
              $this->sql = "delete from test where id = ? ;";
              $value_id = $value['id'];
              $this->query = $this->pdo->prepare($this->sql);
-             $this->query->execute([$value_id]);
              $this->deletePlainTreeOneNodeWithChildren($value['id']);
          }
 
@@ -149,4 +154,8 @@ $database1 = new Database('localhost',  'probation', 'root','');
 //удаление узла с вложенностью
 //$database1->deletePlainTreeOneNodeWithChildren(6,true);
 
-$database1->updatePlainTreeOneNode1();
+//Добавление ответственного
+$database1->insertNewResponsibleInTable('Нет ответственного');
+
+//Редактирование ответственных(передача актуального списка)
+//$database1->updatePlainTreeOneNode1('Нет ответственного',0,'Сотрудник 3 Василий',1,'Сотрудник 4 Пётр',3);
