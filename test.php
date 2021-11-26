@@ -13,23 +13,36 @@ class Database
         $this->passwd = $passwd;
         $this->pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname",$this->username,$this->passwd);
     }
-     function setupPlainTree() // получает массив таблицы из базы данных
+     function setupPlainTree()
     {
-        $this->sql = "select * from test as t join responsible_test as rt on t.id = rt.test_id join responsible as r on r.responsibleId = rt.responsible_id ;";
+        $this->sql = "select * from test as t 
+                      join responsible_test as rt on t.id = rt.test_id 
+                      join responsible as r on r.responsibleId = rt.responsible_id ;";
         $this->query = $this->pdo->prepare($this->sql);
         $this->query->execute();
         $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
-//        $this->plainTree = $this->arr;
+//       $this->plainTree = $this->arr;
         return $this->arr;
     }
-    function insertNewResponsibleInTable($responsible_name) // получает массив таблицы из базы данных
+    function insertNewResponsibleInTable($arr) //Добавление ответственных
     {
-        $this->sql = "INSERT INTO responsible ($responsible_name) VALUES ($responsible_name = ?);";
-        $this->query = $this->pdo->prepare($this->sql);
-        $this->query->execute([$responsible_name]);
-//        $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
-//        $this->plainTree = $this->arr;
-//        return $this->arr;
+        foreach ($arr as $value){
+            $responsible_names = $value['responsible_name'];
+            $testId = $value['divisionId'];
+            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
+            $this->sql = "INSERT INTO responsible (responsible_name) VALUES (:responsible_name);
+                            SET @SQL = (SELECT LAST_INSERT_ID());
+                            INSERT INTO responsible_test (responsible_id,test_id) VALUES ( @SQL,:test_id);
+                            ";
+            $this->query = $this->pdo->prepare($this->sql);
+            $this->query->bindParam(':responsible_name',$responsible_names);
+            $this->query->bindParam(':test_id',$testId);
+            $this->query->execute();
+        }
+
+
+
+
     }
     function updatePlainTreeOneNode($anotherName,$parentId,$id)// обновление узла
     {
@@ -45,23 +58,15 @@ class Database
         }
 
     }
-//    function getResponsibleForUpdate(...$arr){
-//        foreach($arr as $value){
-//
-//        }
-//        updatePlainTreeOneNode1();
-//    }
 
-    function updatePlainTreeOneNode1(...$arr)// обновление узла
+    function updatePlainTreeOneNode1($arrayUpdate)// обновление узла
     {
-        $lenArr =count($arr);
-        echo $lenArr;
-        for($i = 0; $i < $lenArr; $i+=2){
-            $responsible_name = $arr[$i];
-            $responsibleId = $arr[$i+1];
+        foreach($arrayUpdate as $value){
+            $responsible_name = $value['responsible_name'];
+            $responsibleId = $value['divisionId'];
             try{
                 $this->pdo->beginTransaction();
-                $this->sql ="UPDATE responsible SET responsible_name = ? where responsibleId= ?";
+                $this->sql ="UPDATE responsible SET responsible_name = ? where test_id= ?) ;";
                 $this->query = $this->pdo->prepare($this->sql);
                 $this->query->execute([$responsible_name,$responsibleId]);
                 $this->pdo->commit();
@@ -140,9 +145,20 @@ class Database
 
 $database1 = new Database('localhost',  'probation', 'root','');
 
+$array = [
+    ['divisionId' => 1, 'responsible_name' => 'sfdsdfsdfsdf'],
+    ['divisionId' => 2, 'responsible_name' => 'sfdsdfsdfsdf'],
+    ['divisionId' => 3, 'responsible_name' => 'sfdsdfsdfsdf'],
+    ['divisionId' => 4, 'responsible_name' => 'sfdsdfsdfsdf']
+];
+$arrayUpdate = [
+    ['divisionId' => 1, 'responsible_name' => '111111111111'],
+    ['divisionId' => 2, 'responsible_name' => '111111111111'],
+    ['divisionId' => 3, 'responsible_name' => '111111111111'],
+    ['divisionId' => 4, 'responsible_name' => '111111111111']
+];
 
-
- //вывод дерева
+//вывод дерева
 //echo json_encode($database1->createTree(0));
 
 // вывод дерева одного узла
@@ -154,8 +170,8 @@ $database1 = new Database('localhost',  'probation', 'root','');
 //удаление узла с вложенностью
 //$database1->deletePlainTreeOneNodeWithChildren(6,true);
 
-//Добавление ответственного
-$database1->insertNewResponsibleInTable('Нет ответственного');
-
 //Редактирование ответственных(передача актуального списка)
-//$database1->updatePlainTreeOneNode1('Нет ответственного',0,'Сотрудник 3 Василий',1,'Сотрудник 4 Пётр',3);
+$database1->updatePlainTreeOneNode1($arrayUpdate);
+
+//Добавление ответственных
+//$database1->insertNewResponsibleInTable($array);
