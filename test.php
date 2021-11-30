@@ -63,12 +63,12 @@ class Database
     {
         foreach($arrayUpdate as $value){
             $responsible_name = $value['responsible_name'];
-            $responsibleId = $value['divisionId'];
+            $responsible_id = $value['divisionId'];
             try{
                 $this->pdo->beginTransaction();
-                $this->sql ="UPDATE responsible SET responsible_name = ? where test_id= ?) ;";
+                $this->sql ="UPDATE responsible SET responsible_name = ? where responsibleId= ? ;";
                 $this->query = $this->pdo->prepare($this->sql);
-                $this->query->execute([$responsible_name,$responsibleId]);
+                $this->query->execute([$responsible_name,$responsible_id]);
                 $this->pdo->commit();
             }catch (\Exception $e) {
                 $this->pdo->rollBack();
@@ -146,16 +146,16 @@ class Database
 $database1 = new Database('localhost',  'probation', 'root','');
 
 $array = [
-    ['divisionId' => 1, 'responsible_name' => 'sfdsdfsdfsdf'],
-    ['divisionId' => 2, 'responsible_name' => 'sfdsdfsdfsdf'],
-    ['divisionId' => 3, 'responsible_name' => 'sfdsdfsdfsdf'],
-    ['divisionId' => 4, 'responsible_name' => 'sfdsdfsdfsdf']
+    ['divisionId' => 1, 'responsible_name' => '3sfdsdfsdfsdf'],
+    ['divisionId' => 2, 'responsible_name' => '3sfdsdfsdfsdf'],
+    ['divisionId' => 3, 'responsible_name' => '3sfdsdfsdfsdf'],
+    ['divisionId' => 4, 'responsible_name' => '3sfdsdfsdfsdf']
 ];
 $arrayUpdate = [
-    ['divisionId' => 1, 'responsible_name' => '111111111111'],
-    ['divisionId' => 2, 'responsible_name' => '111111111111'],
-    ['divisionId' => 3, 'responsible_name' => '111111111111'],
-    ['divisionId' => 4, 'responsible_name' => '111111111111']
+    ['divisionId' => 1, 'responsible_name' => '3111111111111'],
+    ['divisionId' => 2, 'responsible_name' => '3111111111111'],
+    ['divisionId' => 3, 'responsible_name' => '3111111111111'],
+    ['divisionId' => 4, 'responsible_name' => '3111111111111']
 ];
 
 //вывод дерева
@@ -171,7 +171,7 @@ $arrayUpdate = [
 //$database1->deletePlainTreeOneNodeWithChildren(6,true);
 
 //Редактирование ответственных(передача актуального списка)
-$database1->updatePlainTreeOneNode1($arrayUpdate);
+//$database1->updatePlainTreeOneNode1($arrayUpdate);
 
 //Добавление ответственных
-//$database1->insertNewResponsibleInTable($array);
+$database1->insertNewResponsibleInTable($array);
