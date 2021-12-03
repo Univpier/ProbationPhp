@@ -12,6 +12,7 @@ class Database
 
      function setupPlainTree()
     {
+         //на селекты не нужна транзакция
         try{
             $this->pdo->beginTransaction();
             $this->sql = "select * from test as t 
@@ -30,10 +31,13 @@ class Database
 
     function insertNewResponsibleInTable($arr) //Добавление ответственных
     {
+        //адекватные названия перменных
         foreach ($arr as $value){
+            //либо camelCase либо sanke_case
             $responsible_names = $value['responsible_name'];
             $testId = $value['divisionId'];
             $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
+            //pdo->lastInsertId()
                 $this->sql = "
                             INSERT INTO responsible (responsible_name) VALUES (:responsible_name);
                             SET @SQL = (SELECT LAST_INSERT_ID());
@@ -45,7 +49,7 @@ class Database
             $this->query->execute();
         }
     }
-
+//коммента выпилить
 //    function insertResponsible($arr){
 //            try {
 //                $this->pdo->beginTransaction();
@@ -138,7 +142,7 @@ class Database
                 $this->pdo->commit();
             }catch (\Exception $e) {
                 $this->pdo->rollBack();
-            throw Exception($e);
+                throw Exception($e);
             }
         }
 
@@ -147,6 +151,8 @@ class Database
     {
         $array = [];
         foreach ($this->setupPlainTree() as $value) {
+            //if($parentId !== (int)$value['parentId']) continue;
+            //$array[] = $value;
             if ($parentId === (int)$value['parentId']) {
                 $array[] = $value;
             }
@@ -157,6 +163,8 @@ class Database
     function getOneNode(int $parentId): array//return отфилтрованного по id массива
     {
         foreach ($this->setupPlainTree() as $value) {
+            //if($parentId !== (int)$value['parentId']) continue;
+            //$array[] = $value;
             if ($parentId === (int)$value['id']) {
                 $array[] = $value;
             }
@@ -197,6 +205,7 @@ class Database
              $array_for_delete = $this->getOneNode($parentId);
          }
          foreach ($array_for_delete as $value){
+             //транзакция
              $this->sql = "delete from test where id = ? ;";
              $value_id = $value['id'];
              $this->query = $this->pdo->prepare($this->sql);
