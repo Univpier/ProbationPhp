@@ -2,22 +2,52 @@
 require 'vendor/autoload.php';
 require_once 'vendor\tecnickcom\tcpdf\tcpdf.php';
 require_once 'test.php';
-// Создаем новый PDF документ
-$pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+class PDF
+{
+    // Создаем новый PDF документ
+    function newPDFTable($data)
+    {
+        $this->pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 // Устанавливаем информацию о документе
-$pdf->SetAuthor('Кирилл Лапин');
-$pdf->SetTitle('Вывод в pdf');
+        $this->pdf->SetAuthor('Кирилл Лапин');
+        $this->pdf->SetTitle('Вывод в pdf');
 
 // Устанавливаем автоматические разрывы страниц
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-// Устанавливаем шрифт
-$pdf->SetFont('dejavusans', '', 14, '', true);
+//$pdf->SetAutoPage;
+        $this->pdf->SetFont('courier', '', 14, '', true);
 // Добавляем страницу
-$pdf->AddPage();
-// Устанавливаем текст
+        $this->pdf->AddPage();
+        $this->pdf->cell(50,5,'responsible name',1);
+        $this->pdf->cell(50,5,'name division',1,1);
+        foreach ($data as $key=>$value) {
+    $html = $value['responsible_name'];
+    $html2 = $value['name'];
 
-// Выводим текст с помощью writeHTMLCell()
+    $this->pdf->SetFont('times','',14);
+    $this->pdf->cell(50,5,$html,1);
+    $this->pdf->cell(50,5,$html2,1,1);
+        }
 
-// Закрываем и выводим PDF документ
-$pdf->Output('document.pdf', 'I');
-?>
+        try {
+            $this->pdf->Output('document.pdf', 'D');
+        } catch (PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
+            echo $e->getMessage();
+        }
+
+        // Закрываем и выводим PDF документ
+    }
+
+    function setupTable(){
+
+
+    }
+
+}
+$database = new Database('localhost', 'probation', 'root', '');
+$data = $database->setupPlainTree();
+$pdf = new PDF;
+$pdf->newPDFTable($data);
+
+
+
+
