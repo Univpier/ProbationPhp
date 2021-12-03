@@ -25,6 +25,7 @@ class PDF
         try {
             $this->pdf->Output('document.pdf', 'D');
         } catch (PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
+            //throw
             echo $e->getMessage();
         }
     }
