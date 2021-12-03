@@ -1,10 +1,6 @@
 <?php
-
 class Database
 {
-    public $plainTree;
-    public $arrTree;
-
     function __construct($host, $dbname, $username, $passwd)
     {
         $this->host = $host;
@@ -13,34 +9,43 @@ class Database
         $this->passwd = $passwd;
         $this->pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname",$this->username,$this->passwd);
     }
+
      function setupPlainTree()
     {
-        $this->sql = "select * from test as t 
+        try{
+            $this->pdo->beginTransaction();
+            $this->sql = "select * from test as t 
                       join responsible_test as rt on t.id = rt.test_id 
                       join responsible as r on r.responsibleId = rt.responsible_id ;";
-        $this->query = $this->pdo->prepare($this->sql);
-        $this->query->execute();
-        $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
-//       $this->plainTree = $this->arr;
+            $this->query = $this->pdo->prepare($this->sql);
+            $this->query->execute();
+            $this->arr = $this->query->fetchAll(PDO::FETCH_ASSOC);
+            $this->pdo->commit();
+        }catch (\Exception $e) {
+            $this->pdo->rollBack();
+            throw Exception($e);
+        }
         return $this->arr;
     }
-//    function insertNewResponsibleInTable($arr) //Добавление ответственных
-//    {
-//        foreach ($arr as $value){
-//            $responsible_names = $value['responsible_name'];
-//            $testId = $value['divisionId'];
-//            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
-//                $this->sql = "
-//                            INSERT INTO responsible (responsible_name) VALUES (:responsible_name);
-//                            SET @SQL = (SELECT LAST_INSERT_ID());
-//                            INSERT INTO responsible_test (responsible_id,test_id) VALUES ( @SQL,:test_id);
-//                            ";
-//            $this->query = $this->pdo->prepare($this->sql);
-//            $this->query->bindParam(':responsible_name',$responsible_names);
-//            $this->query->bindParam(':test_id',$testId);
-//            $this->query->execute();
-//        }
-//    }
+
+    function insertNewResponsibleInTable($arr) //Добавление ответственных
+    {
+        foreach ($arr as $value){
+            $responsible_names = $value['responsible_name'];
+            $testId = $value['divisionId'];
+            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
+                $this->sql = "
+                            INSERT INTO responsible (responsible_name) VALUES (:responsible_name);
+                            SET @SQL = (SELECT LAST_INSERT_ID());
+                            INSERT INTO responsible_test (responsible_id,test_id) VALUES ( @SQL,:test_id);
+                            ";
+            $this->query = $this->pdo->prepare($this->sql);
+            $this->query->bindParam(':responsible_name',$responsible_names);
+            $this->query->bindParam(':test_id',$testId);
+            $this->query->execute();
+        }
+    }
+
 //    function insertResponsible($arr){
 //            try {
 //                $this->pdo->beginTransaction();
@@ -60,36 +65,36 @@ class Database
 ////            throw new Exception($e);
 //            }
 //            return $arr;
-    }
-    function insertRelationResponsibleTest($arr){
-        foreach ($arr as $value){
-            try{
-                $this->pdo->beginTransaction();
-                $testId = $value['divisionId'];
-                $responsible_names = $value['responsible_name'];
-                foreach ($this->insertResponsible($arr) as $key => $value){
-                    $responsibleId = $value[$key];
+//    }
+//
+//    function insertRelationResponsibleTest($arr){
+//        foreach ($arr as $value){
+//            try{
+//                $this->pdo->beginTransaction();
+//                $testId = $value['divisionId'];
+//                $responsible_names = $value['responsible_name'];
+//                foreach ($this->insertResponsible($arr) as $key => $value){
+//                    $responsibleId = $value[$key];
+//                }
+//                $this->sql = "INSERT INTO responsible_test (responsible_id,test_id) VALUES (:responsible_id,:test_id);";
+//                $this->query = $this->pdo->prepare($this->sql);
+//                $this->query->bindParam(':test_id',$testId);
+//                $this->query->bindParam(':responsible_id',$responsibleId);
+//                $this->query->execute();
+//                $this->pdo->commit();
+//            }catch (\Exception $e) {
+//                $this->pdo->rollBack();
+//                throw Exception($e);
+//            }
+//
+//        }
+//    }
 
-                }
-                $this->sql = "INSERT INTO responsible_test (responsible_id,test_id) VALUES (:responsible_id,:test_id);";
-                $this->query = $this->pdo->prepare($this->sql);
-                $this->query->bindParam(':test_id',$testId);
-                $this->query->bindParam(':responsible_id',$responsibleId);
-                $this->query->execute();
-                $this->pdo->commit();
-            }catch (\Exception $e) {
-                $this->pdo->rollBack();
-//            throw new Exception($e);
-            }
-
-        }
-    }
     function deleteRelationResponsibleTest($arr){
         foreach($arr as $value){
             try{
-
-                $testId = $value['divisionId'];
                 $this->pdo->beginTransaction();
+                $testId = $value['divisionId'];
                 $this->sql ="DELETE FROM responsible_test WHERE :test_id";
                 $this->query = $this->pdo->prepare($this->sql);
                 $this->query->bindParam(':test_id',$testId);
@@ -98,13 +103,12 @@ class Database
 
             }catch (\Exception $e) {
                 $this->pdo->rollBack();
-//            throw new Exception($e);
+            throw Exception($e);
             }
 
         }
         $this->insertNewResponsibleInTable($arr);
     }
-
 
     function updatePlainTreeOneNode($anotherName,$parentId,$id)// обновление узла
     {
@@ -116,7 +120,7 @@ class Database
             $this->pdo->commit();
         }catch (\Exception $e) {
             $this->pdo->rollBack();
-//            throw new Exception($e);
+            throw Exception($e);
         }
 
     }
@@ -134,12 +138,9 @@ class Database
                 $this->pdo->commit();
             }catch (\Exception $e) {
                 $this->pdo->rollBack();
-//            throw new Exception($e);
+            throw Exception($e);
             }
         }
-
-
-
 
     }
     function getNodes(int $parentId): array // return отфилтрованного по parentId массива
@@ -152,6 +153,7 @@ class Database
         }
         return $array;
     }
+
     function getOneNode(int $parentId): array//return отфилтрованного по id массива
     {
         foreach ($this->setupPlainTree() as $value) {
@@ -161,7 +163,6 @@ class Database
         }
         return $array;
     }
-
 
     function createTree($parentId = 0,$getOneNode = false )// возвращает вложенное дерево(При значении $getOneNode = true выводит вложенность узла по id узла)
     {
@@ -186,6 +187,7 @@ class Database
         return $array;
 
     }
+
      function deletePlainTreeOneNodeWithChildren($parentId =0 ,$getOneNode = false ) // удаление узла с вложенностью ( При значении $getOneNode = true удаляет вложенность узла по id узла)
      {
 //        $array_for_delete = $this->createTree(6,true);
@@ -222,8 +224,8 @@ $array = [
 
 ];
 $arrayUpdate = [
-    ['divisionId' => 1, 'responsible_name' => 'responsible 1'],
-    ['divisionId' => 2, 'responsible_name' => 'responsible 2'],
+    ['divisionId' => 1, 'responsible_name' => 'responsible 2'],
+    ['divisionId' => 2, 'responsible_name' => 'responsible 1'],
     ['divisionId' => 3, 'responsible_name' => 'responsible 3'],
     ['divisionId' => 4, 'responsible_name' => 'responsible 4'],
     ['divisionId' => 5, 'responsible_name' => 'responsible 5'],
@@ -251,8 +253,8 @@ $arrayUpdate = [
 //$database1->updatePlainTreeOneNode1($arrayUpdate);
 
 //Добавление ответственных
-
 //$database1->deleteRelationResponsibleTest($array);
+
 //$database1->insertNewResponsibleInTable($array);
 //$database1->insertRelationResponsibleTest($array);
 //$database1->insertResponsible('3sfdsdfsdfsdf');

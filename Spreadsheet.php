@@ -1,5 +1,4 @@
 <?php
-
 require 'vendor/autoload.php';
 require_once 'test.php';
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -29,7 +28,6 @@ class Exel{
         } catch (PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
             echo $e->getMessage();
         }
-
     }
 }
 
